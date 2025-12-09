@@ -3,10 +3,21 @@ const cors = require('cors');
 const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Rate limiting configuration
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: { error: 'Too many requests, please try again later.' }
+});
+
+// Apply rate limiting to all routes
+app.use(limiter);
 
 // Middleware
 app.use(express.json());
@@ -15,9 +26,13 @@ app.use(cors({
   credentials: true
 }));
 
+// Generate a random session secret for development if not provided
+const crypto = require('crypto');
+const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+
 // Session configuration
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -61,11 +76,10 @@ passport.deserializeUser((user, done) => {
 });
 
 // Authentication Routes
-// Google OAuth login
+// Google OAuth login - no prompt option to avoid re-asking for account after logout
 app.get('/auth/google',
   passport.authenticate('google', { 
-    scope: ['profile', 'email'],
-    prompt: 'select_account' // Remove this line to avoid re-asking for account
+    scope: ['profile', 'email']
   })
 );
 
