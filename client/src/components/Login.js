@@ -26,9 +26,9 @@ const Login = () => {
   }, [navigate]);
 
   const handleGoogleLogin = () => {
-    // Redirect to backend Google OAuth route
-    window.location.href = '/auth/google';
-  };
+  // Redirect to backend auth endpoint
+  window.location.href = 'http://localhost:5000/auth/google';
+};
 
   return (
     <div className="login-container">
